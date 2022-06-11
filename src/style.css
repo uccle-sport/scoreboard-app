@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+div.bg {
+}
+
+.team-ctn {
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	width: 20%;
+}
+
+.team-name {
+	text-align: center;
+	font-size: 18px;
+}
+
+.team-score {
+	text-align: center;
+	font-size: 48px;
+}
