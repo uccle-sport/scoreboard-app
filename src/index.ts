@@ -29,6 +29,12 @@ interface GuiElements {
 	awayScoreDecrement: HTMLElement
 	timeRemainingInput: HTMLInputElement
 	timeRemainingStartStop: HTMLElement
+	setTimeContainer: HTMLElement
+	setTimeTo3000: HTMLButtonElement
+	setTimeTo3500: HTMLButtonElement
+	setTimeTo1730: HTMLButtonElement
+	signageBtn: HTMLButtonElement
+
 }
 
 function formatTime(time: number) {
@@ -48,10 +54,14 @@ export class ScoreBoardAdmin {
 	private editingTime: boolean = false
 	private latestRev: string = ''
 	private elements?: GuiElements = undefined
+	private signage = false
     init() {
 		const root = document.getElementById("root")!!
 		const homeName = document.getElementById("home-name")!!
 		const awayName = document.getElementById("away-name")!!
+
+		const signageBtn = document.getElementById("signage-btn")!! as HTMLButtonElement
+
 		const homeTeamInput: HTMLInputElement = document.getElementById("home-team-input")!! as HTMLInputElement
 		const awayTeamInput: HTMLInputElement = document.getElementById("away-team-input")!! as HTMLInputElement
 		const homeScoreInput: HTMLInputElement = document.getElementById("home-score-input")!! as HTMLInputElement
@@ -62,6 +72,12 @@ export class ScoreBoardAdmin {
 		const awayScoreDecrement = document.getElementById("away-score-decrement")!!
 		const timeRemainingInput: HTMLInputElement = document.getElementById("time-remaining-input")!! as HTMLInputElement
 		const timeRemainingStartStop = document.getElementById("time-remaining-start-stop")!!
+
+		const setTimeContainer = document.getElementById("set-time")!!
+
+		const setTimeTo3000 = document.getElementById("set-time-to-3000")!! as HTMLButtonElement
+		const setTimeTo3500 = document.getElementById("set-time-to-3500")!! as HTMLButtonElement
+		const setTimeTo1730 = document.getElementById("set-time-to-1730")!! as HTMLButtonElement
 
 		this.elements = {
 			root,
@@ -76,10 +92,17 @@ export class ScoreBoardAdmin {
 			awayScoreIncrement,
 			awayScoreDecrement,
 			timeRemainingInput,
-			timeRemainingStartStop
+			timeRemainingStartStop,
+			setTimeContainer,
+			setTimeTo3000,
+			setTimeTo3500,
+			setTimeTo1730,
+			signageBtn
 		}
 
 		this.updateElements(homeScoreInput, awayScoreInput, timeRemainingStartStop, homeName, awayName, homeTeamInput, awayTeamInput, timeRemainingInput, true);
+
+		this.params?.get('signage') && (signageBtn.style.visibility = 'visible')
 
 		homeTeamInput.onblur = (e: FocusEvent) => {
 			this.homeTeam = (e.target as HTMLInputElement).value
@@ -129,6 +152,34 @@ export class ScoreBoardAdmin {
 
 		timeRemainingInput.onfocus = (e: FocusEvent) => {
 			this.editingTime = true
+			setTimeContainer.style.visibility = "inherit"
+		}
+
+		setTimeTo3000.onclick = () => {
+			this.editingTime = false
+			this.remaining = 1800
+			this.endDate = new Date(+new Date() + this.remaining * 1000)
+			timeRemainingInput.value = formatTime(this.remaining)
+			this.update(true)
+			setTimeContainer.style.visibility = "hidden"
+		}
+
+		setTimeTo3500.onclick = () => {
+			this.editingTime = false
+			this.remaining = 2100
+			this.endDate = new Date(+new Date() + this.remaining * 1000)
+			timeRemainingInput.value = formatTime(this.remaining)
+			this.update(true)
+			setTimeContainer.style.visibility = "hidden"
+		}
+
+		setTimeTo1730.onclick = () => {
+			this.editingTime = false
+			this.remaining = 1050
+			this.endDate = new Date(+new Date() + this.remaining * 1000)
+			timeRemainingInput.value = formatTime(this.remaining)
+			this.update(true)
+			setTimeContainer.style.visibility = "hidden"
 		}
 
 		timeRemainingInput.onblur = (e: FocusEvent) => {
@@ -138,9 +189,15 @@ export class ScoreBoardAdmin {
 				(e.target as HTMLInputElement).value = formatTime(this.remaining)
 				return
 			}
-			this.remaining = Number(val.split(':')[0]) * 60 + Number(val.split(':')[1])
-			this.endDate = new Date(+new Date() + this.remaining * 1000)
-			this.update(true)
+
+			let newValue = Number(val.split(':')[0]) * 60 + Number(val.split(':')[1]);
+
+			if (newValue !== this.remaining) {
+				this.remaining = newValue
+				this.endDate = new Date(+new Date() + this.remaining * 1000)
+				this.update(true)
+			}
+			setTimeout(() => setTimeContainer.style.visibility = "hidden", 1000)
 		}
 
 		timeRemainingStartStop.onclick = (e: MouseEvent) => {
@@ -150,9 +207,14 @@ export class ScoreBoardAdmin {
 			this.update(true)
 		}
 
-        QRCode.toCanvas(document.getElementById('qr'), window.location.href, function (error) {
+        QRCode.toCanvas(document.getElementById('qr'), window.location.href, function (error: Error) {
             if (error) console.error(error)
         })
+
+		signageBtn.onclick = () => {
+			this.signage = !this.signage
+			this.update()
+		}
 
 		setInterval(() => {
 			if (this.paused) {
@@ -213,6 +275,7 @@ export class ScoreBoardAdmin {
 				remaining: this.remaining,
 				homeTeam: this.homeTeam,
 				awayTeam: this.awayTeam,
+				slides: ["/img/img1.png", "/img/img2.png", "/img/img3.png", "/img/img4.png", "/img/img5.png", "/img/img6.png"]
 			} : {}
 		this.socket.emit('update', {
 			rev: this.latestRev,
@@ -221,6 +284,7 @@ export class ScoreBoardAdmin {
 			home: this.home,
 			away: this.away,
 			paused: this.paused,
+			signage: this.signage,
 			...extra,
 		}, (resp: any) => {
 			if (resp.status === 409) {

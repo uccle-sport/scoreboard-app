@@ -10,7 +10,8 @@
   },
   "scripts": {
     "dist": "webpack --env mode=production",
-    "start": "webpack-dev-server"
+    "start": "webpack-dev-server",
+    "install": "cp dist/bundle.js ../scoreboard-server/public/admin/bundle.js"
   },
   "devDependencies": {
     "@types/qrcode": "^1.4.1",
